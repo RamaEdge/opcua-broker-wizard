@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface StepProps {
   title: string;
@@ -40,12 +41,17 @@ const ConfigWizard = () => {
     name: 'Production OPC UA Broker',
     endpoint: 'opc.tcp://localhost:4840',
     securityMode: 'sign',
+    securityPolicy: 'Basic256Sha256',
     authenticationType: 'anonymous',
     username: '',
     password: '',
     refreshRate: '1000',
     enableAnonymous: true,
     enableDiagnostics: true,
+    certificateValidation: 'accept-all',
+    useCertificate: false,
+    certificatePath: '',
+    certificatePassword: '',
   });
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +66,15 @@ const ConfigWizard = () => {
   const handleSwitchChange = (name: string, checked: boolean) => {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
+
+  const securityPolicies = [
+    { value: 'None', label: 'None (No Security)' },
+    { value: 'Basic128Rsa15', label: 'Basic128Rsa15 (Legacy)' },
+    { value: 'Basic256', label: 'Basic256 (Legacy)' },
+    { value: 'Basic256Sha256', label: 'Basic256Sha256 (Recommended)' },
+    { value: 'Aes128_Sha256_RsaOaep', label: 'Aes128_Sha256_RsaOaep' },
+    { value: 'Aes256_Sha256_RsaPss', label: 'Aes256_Sha256_RsaPss (Highest)' },
+  ];
 
   const steps = [
     {
@@ -132,6 +147,30 @@ const ConfigWizard = () => {
               </Select>
             </div>
             
+            {formData.securityMode !== 'none' && (
+              <div className="space-y-2">
+                <Label htmlFor="security-policy">Security Policy</Label>
+                <Select 
+                  value={formData.securityPolicy}
+                  onValueChange={(value) => handleSelectChange('securityPolicy', value)}
+                >
+                  <SelectTrigger id="security-policy">
+                    <SelectValue placeholder="Select security policy" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {securityPolicies.map((policy) => (
+                      <SelectItem key={policy.value} value={policy.value}>
+                        {policy.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Security policy defines the cryptographic algorithms used for encryption and signatures.
+                </p>
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="auth-type">Authentication Type</Label>
               <Select 
@@ -174,6 +213,76 @@ const ConfigWizard = () => {
                 </div>
               </div>
             )}
+            
+            {formData.authenticationType === 'certificate' && (
+              <div className="space-y-4 p-4 border rounded-md bg-muted/30">
+                <div className="flex items-center gap-2 text-primary">
+                  <Key size={16} />
+                  <span className="font-medium">Certificate Authentication</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="certificate-path">Certificate Path</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="certificate-path" 
+                      name="certificatePath"
+                      placeholder="/path/to/certificate.pfx" 
+                      value={formData.certificatePath}
+                      onChange={handleInputChange}
+                      className="flex-1"
+                    />
+                    <Button variant="outline" type="button">
+                      <FileDigit className="h-4 w-4 mr-1" />
+                      Browse
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="certificate-password">Certificate Password</Label>
+                  <Input 
+                    id="certificate-password" 
+                    name="certificatePassword"
+                    type="password" 
+                    placeholder="Certificate password (if required)"
+                    value={formData.certificatePassword}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="pt-4">
+              <Label className="mb-2 block">Certificate Validation</Label>
+              <RadioGroup 
+                value={formData.certificateValidation} 
+                onValueChange={(value) => handleSelectChange('certificateValidation', value)}
+                className="space-y-2 pt-1"
+              >
+                <div className="flex items-start space-x-2">
+                  <RadioGroupItem value="accept-all" id="accept-all" />
+                  <Label htmlFor="accept-all" className="font-normal cursor-pointer">
+                    <span className="font-medium">Accept all certificates</span>
+                    <p className="text-xs text-muted-foreground">Accept any server certificate (not recommended for production)</p>
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <RadioGroupItem value="verify" id="verify" />
+                  <Label htmlFor="verify" className="font-normal cursor-pointer">
+                    <span className="font-medium">Verify certificate</span>
+                    <p className="text-xs text-muted-foreground">Validate server certificate against trusted certificate authorities</p>
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <RadioGroupItem value="trust-managed" id="trust-managed" />
+                  <Label htmlFor="trust-managed" className="font-normal cursor-pointer">
+                    <span className="font-medium">Managed trust list</span>
+                    <p className="text-xs text-muted-foreground">Use a custom trust list to validate server certificates</p>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
             
             <div className="flex items-center justify-between pt-2">
               <div className="space-y-0.5">
@@ -265,9 +374,23 @@ const ConfigWizard = () => {
                 <span className="text-muted-foreground">Security Mode:</span>
                 <span className="font-medium capitalize">{formData.securityMode}</span>
               </li>
+              {formData.securityMode !== 'none' && (
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Security Policy:</span>
+                  <span className="font-medium">{formData.securityPolicy}</span>
+                </li>
+              )}
               <li className="flex justify-between">
                 <span className="text-muted-foreground">Authentication:</span>
                 <span className="font-medium capitalize">{formData.authenticationType}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-muted-foreground">Certificate Validation:</span>
+                <span className="font-medium">
+                  {formData.certificateValidation === 'accept-all' && 'Accept All'}
+                  {formData.certificateValidation === 'verify' && 'Verify Certificate'}
+                  {formData.certificateValidation === 'trust-managed' && 'Managed Trust List'}
+                </span>
               </li>
               <li className="flex justify-between">
                 <span className="text-muted-foreground">Anonymous Access:</span>

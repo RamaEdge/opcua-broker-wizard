@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Server, Network, Database } from 'lucide-react';
+import { Server, Network, Database, Shield } from 'lucide-react';
 import ConfigWizard from '@/components/config/ConfigWizard';
 import ConfigCard from '@/components/config/ConfigCard';
 
@@ -17,6 +17,8 @@ const Config = () => {
       status: 'active',
       endpoint: 'opc.tcp://prod-server:4840',
       securityMode: 'sign',
+      securityPolicy: 'Basic256Sha256',
+      authType: 'certificate',
     },
     {
       id: 2,
@@ -25,6 +27,8 @@ const Config = () => {
       status: 'inactive',
       endpoint: 'opc.tcp://dev-server:4840',
       securityMode: 'none',
+      securityPolicy: 'None',
+      authType: 'anonymous',
     },
     {
       id: 3,
@@ -33,6 +37,8 @@ const Config = () => {
       status: 'inactive',
       endpoint: 'opc.tcp://backup-server:4840',
       securityMode: 'signandencrypt',
+      securityPolicy: 'Aes256_Sha256_RsaPss',
+      authType: 'username',
     },
   ] as const;
   
@@ -82,6 +88,14 @@ const Config = () => {
                       <span className="text-muted-foreground">Security:</span>
                       <span className="font-medium capitalize">{config.securityMode}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Policy:</span>
+                      <span className="font-medium">{config.securityPolicy}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Auth:</span>
+                      <span className="font-medium capitalize">{config.authType}</span>
+                    </div>
                   </div>
                 </ConfigCard>
               ))}
@@ -98,6 +112,17 @@ const Config = () => {
               >
                 <div className="text-muted-foreground text-sm">
                   Configure timeout settings, reconnect behavior, and network parameters for your OPC UA connections.
+                </div>
+              </ConfigCard>
+              
+              <ConfigCard
+                title="Security Settings"
+                description="Global security settings for OPC UA connections"
+                icon={<Shield className="h-5 w-5" />}
+                onEdit={() => {}}
+              >
+                <div className="text-muted-foreground text-sm">
+                  Configure certificate stores, trust lists, and global security policies for all your OPC UA connections.
                 </div>
               </ConfigCard>
               
