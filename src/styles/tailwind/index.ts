@@ -7,7 +7,7 @@ import { container, borderRadius, boxShadow, backgroundImage } from "./layout";
 import plugins from "./plugins";
 
 export default {
-  darkMode: ["class"],
+  darkMode: "class",
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
