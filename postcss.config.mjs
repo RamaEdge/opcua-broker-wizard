@@ -2,7 +2,7 @@
 export default {
   plugins: {
     'tailwindcss/nesting': {},
-    '@tailwindcss/postcss': {},
+    tailwindcss: {}, // This is the correct way to include tailwindcss
     autoprefixer: {},
     ...(process.env.NODE_ENV === 'production'
       ? {
