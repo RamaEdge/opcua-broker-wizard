@@ -1,0 +1,49 @@
+
+name: Container Build Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: opc-ua-connect:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Test in container
+        run: |
+          docker run --rm opc-ua-connect:latest npm test
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Lint in container
+        run: |
+          docker build -t opc-ua-connect-lint:latest -f Dockerfile.lint .
+          docker run --rm opc-ua-connect-lint:latest
