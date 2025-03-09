@@ -47,7 +47,7 @@ const Navbar = () => {
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-blue-400 rounded-md flex items-center justify-center">
             <Settings size={18} className="text-white" />
           </div>
-          <span>OPC UA Broker</span>
+          <span>OPC UA Connect</span>
         </Link>
 
         {/* Desktop Navigation */}

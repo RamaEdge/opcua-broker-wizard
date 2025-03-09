@@ -43,7 +43,7 @@ const Hero = () => {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold leading-tight md:leading-tight tracking-tight mb-6 animate-slide-up">
-            Manage your <span className="text-gradient">OPC UA Broker</span> with elegance and precision
+            Manage your <span className="text-gradient">OPC UA Connect</span> with elegance and precision
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 animate-slide-up delay-75 text-balance">
