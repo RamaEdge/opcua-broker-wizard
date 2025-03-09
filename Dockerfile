@@ -4,6 +4,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install jq for potential configuration manipulation
+RUN apk add --no-cache jq
+
 # Copy package files
 COPY package*.json ./
 
