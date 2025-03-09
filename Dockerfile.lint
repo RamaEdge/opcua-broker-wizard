@@ -3,16 +3,19 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Install jq for JSON manipulation
+RUN apk add --no-cache jq
+
+# Copy package files first
 COPY package*.json ./
 
 # Install dependencies with legacy peer deps flag to avoid compatibility issues
 RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
-# Copy entire project first to ensure all files are available
+# Copy entire project, including the lint-package-patch.json
 COPY . .
 
-# Apply lint patch to ensure the correct lint script is available
+# Apply lint patch properly
 RUN cat .github/lint-package-patch.json | jq -s '.[0] * .[1]' package.json - > package.json.new && mv package.json.new package.json
 
 # Run linting

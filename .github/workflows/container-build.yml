@@ -43,10 +43,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      # We no longer need this step as jq is now installed in the container
-      # - name: Install jq
-      #   run: sudo apt-get update && sudo apt-get install -y jq
-      
       - name: Lint in container
         run: |
           docker build -t opc-ua-connect-lint:latest -f Dockerfile.lint .
