@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
 # Apply lint patch to ensure the correct lint script is available
-COPY .github/lint-package-patch.json ./lint-patch.json
+COPY ../.github/lint-package-patch.json ./lint-patch.json
 RUN cat lint-patch.json | jq -s '.[0] * .[1]' package.json - > package.json.new && mv package.json.new package.json
 
 # Copy source code
