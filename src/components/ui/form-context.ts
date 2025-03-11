@@ -1,20 +1,30 @@
 
 import * as React from "react"
 
-type FormFieldContextValue = {
-  name: string
-}
-
-type FormItemContextValue = {
+export type FormItemContextValue = {
   id: string
 }
 
-export const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue)
-export const FormItemContext = React.createContext<FormItemContextValue>({} as FormItemContextValue)
+export const FormItemContext = React.createContext<FormItemContextValue>(
+  {} as FormItemContextValue
+)
+
+export type FormFieldContextValue = {
+  name: string
+}
+
+export const FormFieldContext = React.createContext<FormFieldContextValue>(
+  {} as FormFieldContextValue
+)
 
 export const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
+  
+  if (!fieldContext) {
+    throw new Error("useFormField should be used within <FormField>")
+  }
+  
   const { id } = itemContext
 
   const formItemId = `${id}-form-item`
