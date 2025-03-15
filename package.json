@@ -71,6 +71,9 @@
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.9.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^16.0.0",
@@ -79,6 +82,6 @@
     "tailwindcss": "^4.0.14",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "6.2.2"
+    "vite": "5.0.0"
   }
 }

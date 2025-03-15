@@ -1,6 +1,5 @@
-
-import tailwindAnimate from "tailwindcss-animate";
 import tailwindTypography from "@tailwindcss/typography";
+import tailwindAnimate from "tailwindcss-animate";
 
 const plugins = [
   tailwindAnimate,

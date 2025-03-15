@@ -1,5 +1,5 @@
-import { toast } from "@/hooks/use-toast";
 import { backendConfig } from "@/config/backendConfig";
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Validates an OPC UA endpoint format

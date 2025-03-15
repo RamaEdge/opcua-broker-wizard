@@ -1,4 +1,3 @@
-
 // Export types
 export * from './opcUaTypes';
 
@@ -15,8 +14,8 @@ export { readNodeValue, writeNodeValue } from './opcUaReadWrite';
 export { validateEndpointFormat } from './opcUaUtils';
 
 // Create a consolidated service object for backward compatibility
-import { testConnection } from './opcUaConnection';
 import { browseServer } from './opcUaBrowse';
+import { testConnection } from './opcUaConnection';
 import { readNodeValue, writeNodeValue } from './opcUaReadWrite';
 
 /**

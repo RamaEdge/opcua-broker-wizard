@@ -1,10 +1,10 @@
+import type { Config } from "tailwindcss";
 
-import { Config } from "tailwindcss";
-import colors from "./colors";
 import animations from "./animations";
-import typography from "./typography";
+import colors from "./colors";
 import { container, borderRadius, boxShadow, backgroundImage } from "./layout";
 import plugins from "./plugins";
+import typography from "./typography";
 
 export default {
   darkMode: "class",

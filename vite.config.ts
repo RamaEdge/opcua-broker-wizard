@@ -1,10 +1,14 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-//import tailwindcss from "tailwindcss";
+// Built-in imports first
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
+// External imports
+import react from "@vitejs/plugin-react-swc";
+import { componentTagger } from "lovable-tagger";
+import { defineConfig } from "vite";
+
+// Remove commented out import
+// import tailwindcss from "tailwindcss";
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -12,8 +16,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
