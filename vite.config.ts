@@ -7,9 +7,6 @@ import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import { defineConfig } from "vite";
 
-// Remove commented out import
-// import tailwindcss from "tailwindcss";
-
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",

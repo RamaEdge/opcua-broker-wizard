@@ -2,6 +2,7 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
+
 import type { OpcUaNode } from '@/services/opcUa';
 
 interface SelectedNodesListProps {

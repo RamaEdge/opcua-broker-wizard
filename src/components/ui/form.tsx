@@ -1,14 +1,17 @@
-import * as React from "react"
-import { Controller, type ControllerProps, type FieldValues, FormProvider } from "react-hook-form"
-import { FormFieldContext, FormItemContext } from "./form-context"
+
+import * as React from "react";
+import { Controller, type ControllerProps, type FieldValues, FormProvider } from "react-hook-form";
+
+import { cn } from "@/lib/utils";
+import { FormFieldContext, FormItemContext } from "./form-context";
 import {
   FormLabel,
   FormControl,
   FormDescription,
   FormMessage,
-} from "./form-primitives"
+} from "./form-primitives";
 
-export const Form = FormProvider
+export const Form = FormProvider;
 
 export const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -18,24 +21,24 @@ export const FormField = <
       <Controller {...props} />
     </FormFieldContext.Provider>
   )
-}
+};
 
 export const FormItem = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-  const id = React.useId()
+  const id = React.useId();
   return (
     <FormItemContext.Provider value={{ id }}>
       <div ref={ref} className={cn("space-y-2", className)} {...props} />
     </FormItemContext.Provider>
   )
-})
-FormItem.displayName = "FormItem"
+});
+FormItem.displayName = "FormItem";
 
 export {
   FormLabel,
   FormControl,
   FormDescription,
   FormMessage,
-}
+};
