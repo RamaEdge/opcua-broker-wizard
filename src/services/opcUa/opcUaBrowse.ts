@@ -1,6 +1,8 @@
+
+import { toast } from "@/hooks/use-toast";
+
 import { createErrorHandler, getApiBaseUrl } from './opcUaUtils';
 import { testConnection } from './opcUaConnection';
-import { toast } from "@/hooks/use-toast";
 import type { OpcUaNode } from './opcUaTypes';
 
 /**
