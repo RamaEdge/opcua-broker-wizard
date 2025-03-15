@@ -1,6 +1,8 @@
 
 # OPC UA Web Client
 
+![Coverage](https://img.shields.io/badge/coverage-0%25-lightgrey)
+
 A web-based client for OPC UA communication with a Rust backend.
 
 ## Features

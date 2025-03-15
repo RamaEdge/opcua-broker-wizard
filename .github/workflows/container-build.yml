@@ -33,6 +33,65 @@ jobs:
         run: |
           docker run --rm opc-ua-connect:latest echo "Build successful!"
 
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      
+      - name: Run tests with coverage
+        run: npm test -- --coverage
+      
+      - name: Generate coverage badge
+        uses: jaywcjlove/coverage-badges-cli@main
+        with:
+          source: coverage/coverage-summary.json
+          output: coverage/badge.svg
+      
+      - name: Upload coverage as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-badge
+          path: coverage/badge.svg
+          
+      - name: Update README with coverage badge if on main branch
+        if: github.ref == 'refs/heads/main'
+        run: |
+          COVERAGE=$(jq -r '.total.statements.pct' coverage/coverage-summary.json)
+          COLOR=$(
+            if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+              echo "red"
+            elif (( $(echo "$COVERAGE < 80" | bc -l) )); then
+              echo "yellow"
+            else
+              echo "green"
+            fi
+          )
+          BADGE_URL="https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}"
+          # Update README with the badge URL
+          sed -i "s#!\[Coverage\]([^)]*)#![Coverage](${BADGE_URL})#" README.md
+          # If the badge doesn't exist, add it after the title
+          if ! grep -q "!\[Coverage\]" README.md; then
+            sed -i "1 s/^/# OPC UA Web Client\n\n![Coverage](${BADGE_URL})\n\n/" README.md
+          fi
+          
+      - name: Commit README changes
+        if: github.ref == 'refs/heads/main'
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: 'README.md'
+          message: 'Update coverage badge [skip ci]'
+          default_author: github_actions
+
   lint:
     runs-on: ubuntu-latest
     

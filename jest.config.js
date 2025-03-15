@@ -20,4 +20,5 @@ module.exports = {
     '!src/main.tsx',
     '!src/vite-env.d.ts',
   ],
+  coverageReporters: ['text', 'lcov', 'json', 'json-summary'],
 };
