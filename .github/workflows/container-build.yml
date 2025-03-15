@@ -40,16 +40,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-          
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       
-      - name: Run tests with coverage
-        run: npm test -- --coverage
+      - name: Run tests in container
+        run: |
+          docker build -t opc-ua-connect-test:latest -f Dockerfile.test .
+          docker run --name test-container opc-ua-connect-test:latest
+          docker cp test-container:/app/coverage ./coverage
+          docker rm test-container
       
       - name: Generate coverage badge
         uses: jaywcjlove/coverage-badges-cli@main
