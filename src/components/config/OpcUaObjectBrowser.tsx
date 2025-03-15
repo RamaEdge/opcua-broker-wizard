@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Folder, File, ChevronRight, ChevronDown, Search, Check, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { opcUaService, type OpcUaNode } from '@/services/opcUaService';
+import { opcUaService, type OpcUaNode } from '@/services/opcUa';
 
 interface TreeNodeProps {
   node: OpcUaNode;
@@ -40,7 +39,6 @@ const TreeNode = ({
     if (hasChildren) {
       onToggleExpand(node.id);
       
-      // Load child nodes if they haven't been loaded yet or if we're re-expanding
       if (!node.children || node.children.length === 0 || !isExpanded) {
         await loadChildNodes(node.id);
       }
@@ -141,7 +139,6 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
   const [nodeBrowsingStatus, setNodeBrowsingStatus] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   
-  // Load initial nodes
   useEffect(() => {
     if (endpoint) {
       loadInitialNodes();
@@ -161,11 +158,9 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
       const nodes = await opcUaService.browseServer(endpoint);
       setOpcUaNodes(nodes);
       
-      // Flatten tree for search functionality
       const flattenedNodes = flattenNodes(nodes);
       setAllNodes(flattenedNodes);
       
-      // Auto-expand root nodes
       const initialExpanded: Record<string, boolean> = {};
       nodes.forEach(node => {
         initialExpanded[node.id] = true;
@@ -187,7 +182,6 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
     try {
       const childNodes = await opcUaService.browseServer(endpoint, nodeId);
       
-      // Update the opcUaNodes tree with the new child nodes
       const updateNodeChildren = (nodes: OpcUaNode[]): OpcUaNode[] => {
         return nodes.map(node => {
           if (node.id === nodeId) {
@@ -202,7 +196,6 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
       const updatedNodes = updateNodeChildren(opcUaNodes);
       setOpcUaNodes(updatedNodes);
       
-      // Update the flattened nodes list for search
       setAllNodes(flattenNodes(updatedNodes));
     } catch (error) {
       console.error(`Error loading child nodes for ${nodeId}:`, error);
@@ -211,7 +204,6 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
     }
   };
   
-  // Flatten the tree for searching
   const flattenNodes = (nodes: OpcUaNode[]): OpcUaNode[] => {
     return nodes.reduce((acc: OpcUaNode[], node) => {
       acc.push(node);
@@ -249,7 +241,6 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
     
     setSelected(newSelected);
     
-    // Update selectedNodes array for parent component
     const updatedSelectedNodes = Object.keys(newSelected)
       .filter(nodeId => newSelected[nodeId])
       .map(nodeId => findNodeById(nodeId))

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import OpcUaObjectSelection from './OpcUaObjectSelection';
 import { Spinner } from '@/components/ui/spinner';
-import { opcUaService, type OpcUaNode, type ConnectionStatus } from '@/services/opcUaService';
+import { opcUaService, type OpcUaNode, type ConnectionStatus } from '@/services/opcUa';
 
 interface StepProps {
   title: string;
@@ -67,7 +66,6 @@ const ConfigWizard = () => {
     const { name, value } = event.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Reset connection status when endpoint changes
     if (name === 'endpoint') {
       setConnectionStatus(null);
       setConnectionMessage(null);
@@ -585,7 +583,6 @@ const ConfigWizard = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Handle form submission
       toast({
         title: "Configuration Saved",
         description: `${formData.name} has been configured successfully.`,
