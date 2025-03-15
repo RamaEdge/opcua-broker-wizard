@@ -1,124 +1,14 @@
 
-import { useState } from 'react';
-import { Folder, File, ChevronRight, ChevronDown, Search, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Folder, File, ChevronRight, ChevronDown, Search, Check, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-
-// Mock data representing OPC UA objects following OPC UA information model
-const mockOpcUaObjects = [
-  {
-    id: '1',
-    name: 'Objects',
-    nodeType: 'Folder',
-    children: [
-      {
-        id: '1.1',
-        name: 'Server',
-        nodeType: 'Object',
-        children: [
-          {
-            id: '1.1.1',
-            name: 'ServerStatus',
-            nodeType: 'Object',
-            children: [
-              { id: '1.1.1.1', name: 'State', nodeType: 'Variable', dataType: 'String' },
-              { id: '1.1.1.2', name: 'StartTime', nodeType: 'Variable', dataType: 'DateTime' },
-              { id: '1.1.1.3', name: 'CurrentTime', nodeType: 'Variable', dataType: 'DateTime' },
-              { id: '1.1.1.4', name: 'BuildInfo', nodeType: 'Variable', dataType: 'Structure' },
-            ]
-          },
-          {
-            id: '1.1.2',
-            name: 'ServerCapabilities',
-            nodeType: 'Object',
-            children: [
-              { id: '1.1.2.1', name: 'MaxBrowseContinuationPoints', nodeType: 'Variable', dataType: 'UInt16' },
-              { id: '1.1.2.2', name: 'MaxQueryContinuationPoints', nodeType: 'Variable', dataType: 'UInt16' },
-              { id: '1.1.2.3', name: 'MaxHistoryContinuationPoints', nodeType: 'Variable', dataType: 'UInt16' },
-            ]
-          },
-          { id: '1.1.3', name: 'ServerDiagnostics', nodeType: 'Object' },
-          { id: '1.1.4', name: 'VendorServerInfo', nodeType: 'Object' },
-          { id: '1.1.5', name: 'ServerRedundancy', nodeType: 'Object' },
-        ]
-      },
-      {
-        id: '1.2',
-        name: 'DeviceSet',
-        nodeType: 'Object',
-        children: [
-          {
-            id: '1.2.1',
-            name: 'PLC1',
-            nodeType: 'Object',
-            children: [
-              { id: '1.2.1.1', name: 'Temperature', nodeType: 'Variable', dataType: 'Float' },
-              { id: '1.2.1.2', name: 'Pressure', nodeType: 'Variable', dataType: 'Float' },
-              { id: '1.2.1.3', name: 'Status', nodeType: 'Variable', dataType: 'Boolean' },
-            ]
-          },
-          {
-            id: '1.2.2',
-            name: 'Sensor001',
-            nodeType: 'Object',
-            children: [
-              { id: '1.2.2.1', name: 'Value', nodeType: 'Variable', dataType: 'Double' },
-              { id: '1.2.2.2', name: 'Units', nodeType: 'Variable', dataType: 'String' },
-              { id: '1.2.2.3', name: 'IsActive', nodeType: 'Variable', dataType: 'Boolean' },
-            ]
-          }
-        ]
-      },
-    ]
-  },
-  {
-    id: '2',
-    name: 'Types',
-    nodeType: 'Folder',
-    children: [
-      {
-        id: '2.1',
-        name: 'ObjectTypes',
-        nodeType: 'Folder',
-        children: [
-          { id: '2.1.1', name: 'BaseObjectType', nodeType: 'ObjectType' },
-          { id: '2.1.2', name: 'FolderType', nodeType: 'ObjectType' },
-          { id: '2.1.3', name: 'DeviceType', nodeType: 'ObjectType' },
-        ]
-      },
-      {
-        id: '2.2',
-        name: 'VariableTypes',
-        nodeType: 'Folder',
-        children: [
-          { id: '2.2.1', name: 'BaseVariableType', nodeType: 'VariableType' },
-          { id: '2.2.2', name: 'PropertyType', nodeType: 'VariableType' },
-          { id: '2.2.3', name: 'DataItemType', nodeType: 'VariableType' },
-        ]
-      },
-      { id: '2.3', name: 'ReferenceTypes', nodeType: 'Folder' },
-      { id: '2.4', name: 'DataTypes', nodeType: 'Folder' },
-      { id: '2.5', name: 'EventTypes', nodeType: 'Folder' },
-    ]
-  },
-  {
-    id: '3',
-    name: 'Views',
-    nodeType: 'Folder',
-    children: []
-  }
-];
-
-type OpcUaNode = {
-  id: string;
-  name: string;
-  nodeType: string;
-  children?: OpcUaNode[];
-  dataType?: string;
-};
+import { Spinner } from '@/components/ui/spinner';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { opcUaService, type OpcUaNode } from '@/services/opcUaService';
 
 interface TreeNodeProps {
   node: OpcUaNode;
@@ -127,6 +17,8 @@ interface TreeNodeProps {
   selected: Record<string, boolean>;
   onToggleExpand: (id: string) => void;
   onToggleSelect: (id: string, nodeType: string) => void;
+  loadChildNodes: (id: string) => Promise<void>;
+  isLoading: Record<string, boolean>;
 }
 
 const TreeNode = ({ 
@@ -135,15 +27,23 @@ const TreeNode = ({
   expanded, 
   selected, 
   onToggleExpand, 
-  onToggleSelect 
+  onToggleSelect,
+  loadChildNodes,
+  isLoading
 }: TreeNodeProps) => {
   const hasChildren = node.children && node.children.length > 0;
   const isExpanded = expanded[node.id];
   const isSelected = selected[node.id];
+  const isNodeLoading = isLoading[node.id];
   
-  const handleToggleExpand = () => {
+  const handleToggleExpand = async () => {
     if (hasChildren) {
       onToggleExpand(node.id);
+      
+      // Load child nodes if they haven't been loaded yet or if we're re-expanding
+      if (!node.children || node.children.length === 0 || !isExpanded) {
+        await loadChildNodes(node.id);
+      }
     }
   };
   
@@ -171,11 +71,15 @@ const TreeNode = ({
             size="icon" 
             className="h-5 w-5 p-0 mr-1" 
             onClick={handleToggleExpand}
+            disabled={isNodeLoading}
           >
-            {isExpanded ? 
-              <ChevronDown className="h-3.5 w-3.5" /> : 
+            {isNodeLoading ? (
+              <Spinner className="h-3.5 w-3.5" />
+            ) : isExpanded ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
               <ChevronRight className="h-3.5 w-3.5" />
-            }
+            )}
           </Button>
         ) : (
           <div className="w-6"></div>
@@ -211,6 +115,8 @@ const TreeNode = ({
               selected={selected}
               onToggleExpand={onToggleExpand}
               onToggleSelect={onToggleSelect}
+              loadChildNodes={loadChildNodes}
+              isLoading={isLoading}
             />
           ))}
         </div>
@@ -221,16 +127,89 @@ const TreeNode = ({
 
 interface OpcUaObjectBrowserProps {
   onSelectionChange?: (selectedNodes: OpcUaNode[]) => void;
+  endpoint?: string;
 }
 
-const OpcUaObjectBrowser = ({ onSelectionChange }: OpcUaObjectBrowserProps) => {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    '1': true,
-    '2': true
-  });
+const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBrowserProps) => {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNodes, setSelectedNodes] = useState<OpcUaNode[]>([]);
+  const [opcUaNodes, setOpcUaNodes] = useState<OpcUaNode[]>([]);
+  const [allNodes, setAllNodes] = useState<OpcUaNode[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [nodeBrowsingStatus, setNodeBrowsingStatus] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
+  
+  // Load initial nodes
+  useEffect(() => {
+    if (endpoint) {
+      loadInitialNodes();
+    }
+  }, [endpoint]);
+  
+  const loadInitialNodes = async () => {
+    if (!endpoint) {
+      setError("No endpoint URL provided");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const nodes = await opcUaService.browseServer(endpoint);
+      setOpcUaNodes(nodes);
+      
+      // Flatten tree for search functionality
+      const flattenedNodes = flattenNodes(nodes);
+      setAllNodes(flattenedNodes);
+      
+      // Auto-expand root nodes
+      const initialExpanded: Record<string, boolean> = {};
+      nodes.forEach(node => {
+        initialExpanded[node.id] = true;
+      });
+      setExpanded(initialExpanded);
+    } catch (error) {
+      console.error("Error loading initial nodes:", error);
+      setError("Failed to load OPC UA objects. Please check your connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const loadChildNodes = async (nodeId: string) => {
+    if (!endpoint) return;
+    
+    setNodeBrowsingStatus(prev => ({ ...prev, [nodeId]: true }));
+    
+    try {
+      const childNodes = await opcUaService.browseServer(endpoint, nodeId);
+      
+      // Update the opcUaNodes tree with the new child nodes
+      const updateNodeChildren = (nodes: OpcUaNode[]): OpcUaNode[] => {
+        return nodes.map(node => {
+          if (node.id === nodeId) {
+            return { ...node, children: childNodes };
+          } else if (node.children && node.children.length > 0) {
+            return { ...node, children: updateNodeChildren(node.children) };
+          }
+          return node;
+        });
+      };
+      
+      const updatedNodes = updateNodeChildren(opcUaNodes);
+      setOpcUaNodes(updatedNodes);
+      
+      // Update the flattened nodes list for search
+      setAllNodes(flattenNodes(updatedNodes));
+    } catch (error) {
+      console.error(`Error loading child nodes for ${nodeId}:`, error);
+    } finally {
+      setNodeBrowsingStatus(prev => ({ ...prev, [nodeId]: false }));
+    }
+  };
   
   // Flatten the tree for searching
   const flattenNodes = (nodes: OpcUaNode[]): OpcUaNode[] => {
@@ -243,15 +222,13 @@ const OpcUaObjectBrowser = ({ onSelectionChange }: OpcUaObjectBrowserProps) => {
     }, []);
   };
   
-  const allNodes = flattenNodes(mockOpcUaObjects);
-  
   const filteredNodes = searchTerm 
     ? allNodes.filter(node => 
         node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         node.nodeType.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (node.dataType && node.dataType.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-    : mockOpcUaObjects;
+    : opcUaNodes;
   
   const findNodeById = (id: string): OpcUaNode | undefined => {
     return allNodes.find(node => node.id === id);
@@ -286,15 +263,35 @@ const OpcUaObjectBrowser = ({ onSelectionChange }: OpcUaObjectBrowserProps) => {
   
   return (
     <div className="space-y-4 border rounded-md p-4 bg-card">
-      <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search OPC UA objects..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="h-8"
-        />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-1">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search OPC UA objects..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-8"
+          />
+        </div>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={loadInitialNodes} 
+          disabled={isLoading || !endpoint}
+          className="ml-2"
+        >
+          <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+          <span className="sr-only">Refresh</span>
+        </Button>
       </div>
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       
       <div className="flex justify-between items-center text-xs text-muted-foreground pb-1 px-1 border-b">
         <span>Name</span>
@@ -302,41 +299,60 @@ const OpcUaObjectBrowser = ({ onSelectionChange }: OpcUaObjectBrowserProps) => {
       </div>
       
       <ScrollArea className="h-[300px]">
-        <div className="space-y-1">
-          {searchTerm ? (
-            filteredNodes.map(node => (
-              <div
-                key={node.id}
-                className="flex items-center py-1 px-2 hover:bg-muted/50 rounded-md"
-              >
-                <div className="mr-2">{
-                  node.nodeType === 'Folder' ? <Folder className="h-4 w-4 text-amber-500" /> :
-                  node.nodeType === 'Object' ? <Folder className="h-4 w-4 text-blue-500" /> :
-                  <File className="h-4 w-4 text-green-500" />
-                }</div>
-                <div className="flex-1 text-sm">{node.name}</div>
-                <div className="text-xs text-muted-foreground">{node.nodeType}</div>
-                <Checkbox
-                  checked={selected[node.id]}
-                  onCheckedChange={() => handleToggleSelect(node.id, node.nodeType)}
-                  className="ml-2 h-3.5 w-3.5"
+        {isLoading && opcUaNodes.length === 0 ? (
+          <div className="flex justify-center items-center h-full">
+            <Spinner className="w-6 h-6" />
+            <span className="ml-2 text-sm text-muted-foreground">Loading OPC UA objects...</span>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {searchTerm ? (
+              filteredNodes.length > 0 ? (
+                filteredNodes.map(node => (
+                  <div
+                    key={node.id}
+                    className="flex items-center py-1 px-2 hover:bg-muted/50 rounded-md"
+                  >
+                    <div className="mr-2">{
+                      node.nodeType === 'Folder' ? <Folder className="h-4 w-4 text-amber-500" /> :
+                      node.nodeType === 'Object' ? <Folder className="h-4 w-4 text-blue-500" /> :
+                      <File className="h-4 w-4 text-green-500" />
+                    }</div>
+                    <div className="flex-1 text-sm">{node.name}</div>
+                    <div className="text-xs text-muted-foreground">{node.nodeType}</div>
+                    <Checkbox
+                      checked={selected[node.id]}
+                      onCheckedChange={() => handleToggleSelect(node.id, node.nodeType)}
+                      className="ml-2 h-3.5 w-3.5"
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className="py-2 text-center text-sm text-muted-foreground">
+                  No results match your search
+                </div>
+              )
+            ) : opcUaNodes.length > 0 ? (
+              opcUaNodes.map(node => (
+                <TreeNode
+                  key={node.id}
+                  node={node}
+                  level={0}
+                  expanded={expanded}
+                  selected={selected}
+                  onToggleExpand={handleToggleExpand}
+                  onToggleSelect={handleToggleSelect}
+                  loadChildNodes={loadChildNodes}
+                  isLoading={nodeBrowsingStatus}
                 />
+              ))
+            ) : (
+              <div className="py-2 text-center text-sm text-muted-foreground">
+                {!endpoint ? "Enter a server endpoint to browse objects" : "No OPC UA objects found"}
               </div>
-            ))
-          ) : (
-            mockOpcUaObjects.map(node => (
-              <TreeNode
-                key={node.id}
-                node={node}
-                level={0}
-                expanded={expanded}
-                selected={selected}
-                onToggleExpand={handleToggleExpand}
-                onToggleSelect={handleToggleSelect}
-              />
-            ))
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </ScrollArea>
       
       <div className="border-t pt-2">

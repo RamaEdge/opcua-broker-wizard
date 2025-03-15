@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,11 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit, Database } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit, Database, Check, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import OpcUaObjectSelection from './OpcUaObjectSelection';
-import type { OpcUaNode } from './OpcUaObjectBrowser';
+import { Spinner } from '@/components/ui/spinner';
+import { opcUaService, type OpcUaNode, type ConnectionStatus } from '@/services/opcUaService';
 
 interface StepProps {
   title: string;
@@ -55,10 +58,20 @@ const ConfigWizard = () => {
     certificatePassword: '',
     selectedOpcUaNodes: [] as OpcUaNode[],
   });
+  
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
+  const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Reset connection status when endpoint changes
+    if (name === 'endpoint') {
+      setConnectionStatus(null);
+      setConnectionMessage(null);
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -71,6 +84,41 @@ const ConfigWizard = () => {
   
   const handleOpcUaNodesChange = (nodes: OpcUaNode[]) => {
     setFormData(prev => ({ ...prev, selectedOpcUaNodes: nodes }));
+  };
+  
+  const validateConnection = async () => {
+    setIsValidating(true);
+    setConnectionStatus('validating');
+    setConnectionMessage('Validating connection to server...');
+    
+    try {
+      const result = await opcUaService.testConnection(formData.endpoint);
+      setConnectionStatus(result.status);
+      setConnectionMessage(result.message || null);
+      
+      if (result.status === 'connected') {
+        toast({
+          title: "Connection successful",
+          description: "Successfully connected to the OPC UA server.",
+        });
+      } else if (result.status === 'error' && result.message) {
+        toast({
+          title: "Connection failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setConnectionStatus('error');
+      setConnectionMessage(error instanceof Error ? error.message : 'An unknown error occurred');
+      toast({
+        title: "Connection error",
+        description: "Failed to validate connection to the OPC UA server.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const securityPolicies = [
@@ -104,13 +152,57 @@ const ConfigWizard = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="endpoint">Server Endpoint</Label>
-                <Input 
-                  id="endpoint" 
-                  name="endpoint"
-                  placeholder="opc.tcp://server:4840" 
-                  value={formData.endpoint}
-                  onChange={handleInputChange}
-                />
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input 
+                      id="endpoint" 
+                      name="endpoint"
+                      placeholder="opc.tcp://server:4840" 
+                      value={formData.endpoint}
+                      onChange={handleInputChange}
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={validateConnection}
+                      disabled={isValidating || !formData.endpoint}
+                    >
+                      {isValidating ? (
+                        <Spinner className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Check className="mr-2 h-4 w-4" />
+                      )}
+                      Validate
+                    </Button>
+                  </div>
+                  
+                  {connectionStatus && (
+                    <div className="mt-2">
+                      {connectionStatus === 'connected' ? (
+                        <Alert variant="success" className="py-2">
+                          <Check className="h-4 w-4 mr-2" />
+                          <AlertDescription>
+                            Successfully connected to the server.
+                          </AlertDescription>
+                        </Alert>
+                      ) : connectionStatus === 'error' ? (
+                        <Alert variant="destructive" className="py-2">
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          <AlertDescription>
+                            {connectionMessage || "Failed to connect to the server."}
+                          </AlertDescription>
+                        </Alert>
+                      ) : connectionStatus === 'validating' ? (
+                        <Alert className="py-2 bg-muted">
+                          <Spinner className="h-4 w-4 mr-2" />
+                          <AlertDescription>
+                            Validating connection to server...
+                          </AlertDescription>
+                        </Alert>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -313,7 +405,19 @@ const ConfigWizard = () => {
       icon: <Database className="h-5 w-5" />,
       content: (
         <div className="space-y-6">
-          <OpcUaObjectSelection onSelectionChange={handleOpcUaNodesChange} />
+          <OpcUaObjectSelection 
+            onSelectionChange={handleOpcUaNodesChange} 
+            endpoint={connectionStatus === 'connected' ? formData.endpoint : undefined}
+          />
+          
+          {connectionStatus !== 'connected' && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <AlertDescription>
+                You need to validate the connection to the server in Step 1 before browsing objects.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       ),
     },
@@ -375,6 +479,18 @@ const ConfigWizard = () => {
               <li className="flex justify-between">
                 <span className="text-muted-foreground">Endpoint:</span>
                 <span className="font-medium">{formData.endpoint}</span>
+              </li>
+              <li className="flex justify-between">
+                <span className="text-muted-foreground">Connection Status:</span>
+                <span className="font-medium">
+                  {connectionStatus === 'connected' ? (
+                    <span className="text-green-600 flex items-center">
+                      <Check className="h-3 w-3 mr-1" /> Connected
+                    </span>
+                  ) : (
+                    <span className="text-amber-600">Not Validated</span>
+                  )}
+                </span>
               </li>
               <li className="flex justify-between">
                 <span className="text-muted-foreground">Refresh Rate:</span>
@@ -457,6 +573,15 @@ const ConfigWizard = () => {
   ];
 
   const handleNext = () => {
+    if (currentStep === 0 && connectionStatus !== 'connected') {
+      toast({
+        title: "Validation Required",
+        description: "Please validate the connection to the OPC UA server before proceeding.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {

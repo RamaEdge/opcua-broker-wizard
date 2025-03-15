@@ -107,7 +107,7 @@ const Config = () => {
             
             <TabsContent value="objects" className="animate-fade-in border-t border-border/40 pt-6">
               <div className="max-w-4xl mx-auto">
-                <OpcUaObjectSelection />
+                <OpcUaObjectSelection endpoint="opc.tcp://localhost:4840" />
               </div>
             </TabsContent>
             

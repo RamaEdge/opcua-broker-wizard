@@ -13,9 +13,10 @@ import OpcUaObjectBrowser, { type OpcUaNode } from './OpcUaObjectBrowser';
 
 interface OpcUaObjectSelectionProps {
   onSelectionChange?: (selectedNodes: OpcUaNode[]) => void;
+  endpoint?: string;
 }
 
-const OpcUaObjectSelection = ({ onSelectionChange }: OpcUaObjectSelectionProps) => {
+const OpcUaObjectSelection = ({ onSelectionChange, endpoint }: OpcUaObjectSelectionProps) => {
   const [selectedNodes, setSelectedNodes] = useState<OpcUaNode[]>([]);
   const [subscriptionMode, setSubscriptionMode] = useState('polling');
   const [isExpanded, setIsExpanded] = useState(true);
@@ -58,7 +59,10 @@ const OpcUaObjectSelection = ({ onSelectionChange }: OpcUaObjectSelectionProps) 
           </TabsList>
           
           <TabsContent value="objects" className="space-y-4">
-            <OpcUaObjectBrowser onSelectionChange={handleSelectionChange} />
+            <OpcUaObjectBrowser 
+              onSelectionChange={handleSelectionChange} 
+              endpoint={endpoint}
+            />
           </TabsContent>
           
           <TabsContent value="subscription" className="space-y-4">
