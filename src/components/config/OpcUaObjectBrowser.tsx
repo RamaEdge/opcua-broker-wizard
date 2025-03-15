@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Folder, File, ChevronRight, ChevronDown, Search, Check, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Folder, File, ChevronRight, ChevronDown, Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,7 +15,7 @@ interface TreeNodeProps {
   expanded: Record<string, boolean>;
   selected: Record<string, boolean>;
   onToggleExpand: (id: string) => void;
-  onToggleSelect: (id: string, nodeType: string) => void;
+  onToggleSelect: (id: string, _nodeType: string) => void; // Prefixed with underscore
   loadChildNodes: (id: string) => Promise<void>;
   isLoading: Record<string, boolean>;
 }
@@ -139,13 +139,7 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
   const [nodeBrowsingStatus, setNodeBrowsingStatus] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
   
-  useEffect(() => {
-    if (endpoint) {
-      loadInitialNodes();
-    }
-  }, [endpoint]);
-  
-  const loadInitialNodes = async () => {
+  const loadInitialNodes = useCallback(async () => {
     if (!endpoint) {
       setError("No endpoint URL provided");
       return;
@@ -172,7 +166,17 @@ const OpcUaObjectBrowser = ({ onSelectionChange, endpoint = '' }: OpcUaObjectBro
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [endpoint]);
+  
+  useEffect(() => {
+    if (endpoint) {
+      loadInitialNodes();
+    }
+  }, [endpoint]);
+  
+  useEffect(() => {
+    loadInitialNodes();
+  }, [loadInitialNodes]);
   
   const loadChildNodes = async (nodeId: string) => {
     if (!endpoint) return;

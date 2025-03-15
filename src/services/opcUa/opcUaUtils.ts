@@ -1,4 +1,3 @@
-
 import { toast } from "@/hooks/use-toast";
 import { backendConfig } from "@/config/backendConfig";
 
@@ -33,8 +32,9 @@ export const validateEndpointFormat = (endpoint: string): { isValid: boolean; me
     }
     
     return { isValid: true };
-  } catch (e) {
-    return { isValid: false, message: 'Invalid endpoint URL format' };
+  } catch (error) {
+    console.error('Endpoint validation error:', error);
+    return { isValid: false, message: 'Invalid endpoint format' };
   }
 };
 

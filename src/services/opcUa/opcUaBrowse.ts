@@ -1,4 +1,3 @@
-
 import { createErrorHandler, getApiBaseUrl } from './opcUaUtils';
 import { testConnection } from './opcUaConnection';
 import { toast } from "@/hooks/use-toast";
@@ -11,11 +10,18 @@ import type { OpcUaNode } from './opcUaTypes';
  * @returns Promise resolving to an array of OPC UA nodes
  */
 export const browseServer = async (endpoint: string, nodeId?: string): Promise<OpcUaNode[]> => {
+  const handleError = createErrorHandler('Browse server');
+  
   try {
     // Validate connection first (optional - you might want to skip this if you know you're already connected)
     if (!nodeId) {
       const connectionCheck = await testConnection(endpoint);
       if (connectionCheck.status !== 'connected') {
+        toast({
+          variant: "destructive",
+          title: "Connection Failed",
+          description: connectionCheck.message || 'Failed to connect to the server'
+        });
         throw new Error(connectionCheck.message || 'Failed to connect to the server');
       }
     }
@@ -41,7 +47,6 @@ export const browseServer = async (endpoint: string, nodeId?: string): Promise<O
     return data.nodes;
     
   } catch (error) {
-    createErrorHandler('browsing OPC UA server')(error);
-    return [];
+    return handleError(error);
   }
 };
