@@ -1,7 +1,8 @@
-import { createErrorHandler, getApiBaseUrl } from './opcUaUtils';
 import { testConnection } from './opcUaConnection';
-import { toast } from "@/hooks/use-toast";
 import type { OpcUaNode } from './opcUaTypes';
+import { createErrorHandler, getApiBaseUrl } from './opcUaUtils';
+
+import { toast } from "@/hooks/use-toast";
 
 /**
  * Browse the OPC UA server address space via Rust backend

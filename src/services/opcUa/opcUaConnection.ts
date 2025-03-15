@@ -1,6 +1,6 @@
-
-import { validateEndpointFormat, createErrorHandler, getApiBaseUrl } from './opcUaUtils';
 import type { ConnectionStatus } from './opcUaTypes';
+import { validateEndpointFormat, createErrorHandler, getApiBaseUrl } from './opcUaUtils';
+
 
 /**
  * Test connection to an OPC UA server via Rust backend

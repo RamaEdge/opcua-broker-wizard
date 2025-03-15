@@ -1,6 +1,5 @@
-
-import Layout from '@/components/layout/Layout';
 import Hero from '@/components/hero/Hero';
+import Layout from '@/components/layout/Layout';
 
 const Index = () => {
   return (
