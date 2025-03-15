@@ -10,39 +10,6 @@ import OpcUaObjectSelection from '@/components/config/OpcUaObjectSelection';
 const Config = () => {
   const [activeTab, setActiveTab] = useState('wizard');
   
-  const mockConfigs = [
-    {
-      id: 1,
-      title: 'Production Server',
-      description: 'Main OPC UA server configuration for production environment',
-      status: 'active',
-      endpoint: 'opc.tcp://prod-server:4840',
-      securityMode: 'sign',
-      securityPolicy: 'Basic256Sha256',
-      authType: 'certificate',
-    },
-    {
-      id: 2,
-      title: 'Development Server',
-      description: 'Testing environment for development and integration',
-      status: 'inactive',
-      endpoint: 'opc.tcp://dev-server:4840',
-      securityMode: 'none',
-      securityPolicy: 'None',
-      authType: 'anonymous',
-    },
-    {
-      id: 3,
-      title: 'Backup Server',
-      description: 'Failover server configuration for emergency situations',
-      status: 'inactive',
-      endpoint: 'opc.tcp://backup-server:4840',
-      securityMode: 'signandencrypt',
-      securityPolicy: 'Aes256_Sha256_RsaPss',
-      authType: 'username',
-    },
-  ] as const;
-  
   return (
     <Layout>
       <div className="container mx-auto px-6 py-8 animate-fade-in">
@@ -72,36 +39,9 @@ const Config = () => {
             
             <TabsContent value="existing" className="animate-fade-in border-t border-border/40 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mockConfigs.map((config) => (
-                  <ConfigCard
-                    key={config.id}
-                    title={config.title}
-                    description={config.description}
-                    status={config.status}
-                    icon={<Server className="h-5 w-5" />}
-                    onEdit={() => {}}
-                    onConfigure={() => setActiveTab('wizard')}
-                  >
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Endpoint:</span>
-                        <span className="font-medium">{config.endpoint}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Security:</span>
-                        <span className="font-medium capitalize">{config.securityMode}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Policy:</span>
-                        <span className="font-medium">{config.securityPolicy}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Auth:</span>
-                        <span className="font-medium capitalize">{config.authType}</span>
-                      </div>
-                    </div>
-                  </ConfigCard>
-                ))}
+                <p className="col-span-full text-center text-muted-foreground py-8">
+                  No configurations found. Use the Configuration Wizard to create a new connection.
+                </p>
               </div>
             </TabsContent>
             
