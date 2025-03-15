@@ -1,42 +1,34 @@
-
 import * as React from "react"
+import { type FieldValues, type FieldPath } from "react-hook-form"
 
-export type FormItemContextValue = {
-  id: string
-}
-
-export const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
-)
-
-export type FormFieldContextValue = {
-  name: string
+export type FormFieldContextValue<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+> = {
+  name: TName
 }
 
 export const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 )
 
-export const useFormField = () => {
+export const FormItemContext = React.createContext<{ id: string }>({} as { id: string })
+
+export function useFormField() {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  
+
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
-  
-  const { id } = itemContext
 
-  const formItemId = `${id}-form-item`
-  const formDescriptionId = `${id}-form-item-description`
-  const formMessageId = `${id}-form-item-message`
+  const { id } = itemContext
 
   return {
     id,
     name: fieldContext.name,
-    formItemId,
-    formDescriptionId,
-    formMessageId,
-    error: undefined
+    formItemId: `${id}-form-item`,
+    formDescriptionId: `${id}-form-item-description`,
+    formMessageId: `${id}-form-item-message`,
   }
 }
