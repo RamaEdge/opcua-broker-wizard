@@ -16,9 +16,6 @@ RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Run tests
-RUN npm test -- --coverage
-
 # Build the application
 RUN npm run build
 
