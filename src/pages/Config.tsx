@@ -9,6 +9,7 @@ import OpcUaObjectSelection from '@/components/config/OpcUaObjectSelection';
 
 const Config = () => {
   const [activeTab, setActiveTab] = useState('wizard');
+  const [serverEndpoint, setServerEndpoint] = useState('opc.tcp://localhost:4840');
   
   return (
     <Layout>
@@ -29,7 +30,6 @@ const Config = () => {
             <TabsList className="border bg-muted/50">
               <TabsTrigger value="wizard">Configuration Wizard</TabsTrigger>
               <TabsTrigger value="existing">Existing Configurations</TabsTrigger>
-              <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
               <TabsTrigger value="objects">OPC UA Objects</TabsTrigger>
             </TabsList>
             
@@ -46,56 +46,29 @@ const Config = () => {
             </TabsContent>
             
             <TabsContent value="objects" className="animate-fade-in border-t border-border/40 pt-6">
-              <div className="max-w-4xl mx-auto">
-                <OpcUaObjectSelection endpoint="opc.tcp://localhost:4840" />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="advanced" className="animate-fade-in border-t border-border/40 pt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ConfigCard
-                  title="Network Settings"
-                  description="Configure network parameters for the OPC UA connections"
-                  icon={<Network className="h-5 w-5" />}
-                  onEdit={() => {}}
-                >
-                  <div className="text-muted-foreground text-sm">
-                    Configure timeout settings, reconnect behavior, and network parameters for your OPC UA connections.
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-medium">OPC UA Server Endpoint</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Connect to an OPC UA server to browse available objects
+                    </p>
                   </div>
-                </ConfigCard>
+                  
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={serverEndpoint}
+                      onChange={(e) => setServerEndpoint(e.target.value)}
+                      placeholder="opc.tcp://server:port"
+                      className="px-3 py-2 rounded-md border border-input bg-transparent text-sm"
+                    />
+                  </div>
+                </div>
                 
-                <ConfigCard
-                  title="Security Settings"
-                  description="Global security settings for OPC UA connections"
-                  icon={<Shield className="h-5 w-5" />}
-                  onEdit={() => {}}
-                >
-                  <div className="text-muted-foreground text-sm">
-                    Configure certificate stores, trust lists, and global security policies for all your OPC UA connections.
-                  </div>
-                </ConfigCard>
-                
-                <ConfigCard
-                  title="Data Storage"
-                  description="Configure how data is stored and managed"
-                  icon={<Database className="h-5 w-5" />}
-                  onEdit={() => {}}
-                >
-                  <div className="text-muted-foreground text-sm">
-                    Configure data retention policies, storage location, and database connections for your OPC UA data.
-                  </div>
-                </ConfigCard>
-                
-                <ConfigCard
-                  title="Object Browser"
-                  description="Browse and select OPC UA objects to monitor"
-                  icon={<Cpu className="h-5 w-5" />}
-                  onConfigure={() => setActiveTab('objects')}
-                >
-                  <div className="text-muted-foreground text-sm">
-                    Explore the OPC UA address space and select objects, variables, and methods to monitor and interact with.
-                  </div>
-                </ConfigCard>
+                <div className="max-w-4xl mx-auto">
+                  <OpcUaObjectSelection endpoint={serverEndpoint} />
+                </div>
               </div>
             </TabsContent>
           </Tabs>
