@@ -22,9 +22,10 @@ export const opcUaService = {
    */
   testConnection: async (endpoint: string): Promise<{ status: ConnectionStatus; message?: string }> => {
     // In a real implementation, this would use a library to connect to the OPC UA server
-    // For demo purposes, we'll simulate the connection
+    // For demo purposes, we'll simulate the connection with more realistic validation
     
     try {
+      // Initial validation
       if (!endpoint) {
         return { status: 'error', message: 'Endpoint URL is required' };
       }
@@ -34,25 +35,93 @@ export const opcUaService = {
         return { status: 'error', message: 'Endpoint must start with opc.tcp://' };
       }
       
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Extract host and port from endpoint
+      const url = new URL(endpoint);
+      const host = url.hostname;
+      const port = url.port;
       
-      // Simulate success/failure based on the endpoint
-      if (endpoint.includes('error') || endpoint.includes('invalid')) {
-        return { status: 'error', message: 'Could not connect to the server' };
+      if (!host) {
+        return { status: 'error', message: 'Invalid hostname in endpoint URL' };
+      }
+      
+      if (port && (isNaN(Number(port)) || Number(port) <= 0 || Number(port) > 65535)) {
+        return { status: 'error', message: 'Invalid port number. Port must be between 1-65535' };
+      }
+      
+      // Simulate connection attempt
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Simulate network checks
+      
+      // Simulate DNS resolution
+      if (host === 'localhost' || host === '127.0.0.1') {
+        // Allow localhost connections
+      } else if (host.includes('non-existent')) {
+        return { status: 'error', message: 'DNS resolution failed: Could not resolve hostname' };
+      } else if (host.includes('example') && !host.includes('real-example')) {
+        // Simulate DNS resolution failure for example domains except 'real-example'
+        return { status: 'error', message: 'DNS resolution failed: Could not resolve hostname' };
+      }
+      
+      // Simulate actual server endpoint check
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Simulate various errors
+      if (endpoint.includes('error')) {
+        return { status: 'error', message: 'Connection error: The server rejected the connection' };
       }
       
       if (endpoint.includes('timeout')) {
-        return { status: 'error', message: 'Connection timeout' };
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        return { status: 'error', message: 'Connection timeout: The server did not respond in time' };
       }
+      
+      if (endpoint.includes('invalid-cert')) {
+        return { status: 'error', message: 'Security error: Server certificate validation failed' };
+      }
+      
+      if (endpoint.includes('no-server')) {
+        return { status: 'error', message: 'Server not found: No OPC UA server is running at the specified endpoint' };
+      }
+      
+      if (endpoint.includes('refused')) {
+        return { status: 'error', message: 'Connection refused: The server actively refused the connection' };
+      }
+      
+      // For testing, only allow specific endpoints to "connect" successfully
+      const allowedHosts = ['localhost', '127.0.0.1', 'real-example.com', 'opcua-server.com', 'demo.opcua.org'];
+      const isAllowed = allowedHosts.some(allowed => host.includes(allowed));
+      
+      if (!isAllowed) {
+        // Simulate a more realistic connection failure
+        return { 
+          status: 'error', 
+          message: 'Failed to establish connection with the OPC UA server. Verify the server is running and accessible.' 
+        };
+      }
+      
+      // Simulate successful handshake
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       return { status: 'connected' };
     } catch (error) {
       console.error('Error connecting to OPC UA server:', error);
-      return { 
-        status: 'error', 
-        message: error instanceof Error ? error.message : 'Unknown error occurred' 
-      };
+      // More detailed error message
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('NetworkError')) {
+          errorMessage = 'Network error: Unable to reach the server';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Connection timeout: The server did not respond in time';
+        } else if (error.message.includes('certificate')) {
+          errorMessage = 'Security error: Certificate validation failed';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      return { status: 'error', message: errorMessage };
     }
   },
   
@@ -64,8 +133,14 @@ export const opcUaService = {
    */
   browseServer: async (endpoint: string, nodeId?: string): Promise<OpcUaNode[]> => {
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Validate connection first
+      const connectionCheck = await opcUaService.testConnection(endpoint);
+      if (connectionCheck.status !== 'connected') {
+        throw new Error(connectionCheck.message || 'Failed to connect to the server');
+      }
+      
+      // Simulate network delay more realistically
+      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
       
       // In a real implementation, this would use a library to browse the OPC UA server
       // For demo purposes, we'll return simulated data based on the OPC UA information model
