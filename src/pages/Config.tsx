@@ -44,15 +44,15 @@ const Config = () => {
   
   return (
     <Layout>
-      <div className="container py-8 animate-fade-in">
-        <div className="mb-8">
+      <div className="container mx-auto px-6 py-8 animate-fade-in">
+        <div className="mb-8 px-2">
           <h1 className="text-3xl font-bold tracking-tight">Configuration</h1>
           <p className="text-muted-foreground mt-1">
             Configure your OPC UA broker connections and settings
           </p>
         </div>
         
-        <div className="border rounded-lg p-6 shadow-sm bg-card">
+        <div className="border rounded-lg p-6 shadow-sm bg-card mx-2">
           <Tabs 
             value={activeTab} 
             onValueChange={setActiveTab} 
