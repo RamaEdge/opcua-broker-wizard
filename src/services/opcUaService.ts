@@ -11,19 +11,19 @@ export type OpcUaNode = {
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'error' | 'connecting' | 'validating';
 
+// Backend API configuration
+const BACKEND_URL = import.meta.env.VITE_OPCUA_BACKEND_URL || 'http://localhost:3000/api';
+
 /**
- * Service to handle OPC UA server connections and browsing
+ * Service to handle OPC UA server connections and browsing through a Rust backend
  */
 export const opcUaService = {
   /**
-   * Test connection to an OPC UA server
+   * Test connection to an OPC UA server via Rust backend
    * @param endpoint The server endpoint URL
    * @returns Promise resolving to connection status
    */
   testConnection: async (endpoint: string): Promise<{ status: ConnectionStatus; message?: string }> => {
-    // In a real implementation, this would use a library to connect to the OPC UA server
-    // For demo purposes, we'll simulate the connection with more realistic validation
-    
     try {
       // Initial validation
       if (!endpoint) {
@@ -35,87 +35,53 @@ export const opcUaService = {
         return { status: 'error', message: 'Endpoint must start with opc.tcp://' };
       }
       
-      // Extract host and port from endpoint
-      const url = new URL(endpoint);
-      const host = url.hostname;
-      const port = url.port;
-      
-      if (!host) {
-        return { status: 'error', message: 'Invalid hostname in endpoint URL' };
+      // Extract host and port from endpoint for basic validation
+      try {
+        const url = new URL(endpoint);
+        const host = url.hostname;
+        const port = url.port;
+        
+        if (!host) {
+          return { status: 'error', message: 'Invalid hostname in endpoint URL' };
+        }
+        
+        if (port && (isNaN(Number(port)) || Number(port) <= 0 || Number(port) > 65535)) {
+          return { status: 'error', message: 'Invalid port number. Port must be between 1-65535' };
+        }
+      } catch (e) {
+        return { status: 'error', message: 'Invalid endpoint URL format' };
       }
       
-      if (port && (isNaN(Number(port)) || Number(port) <= 0 || Number(port) > 65535)) {
-        return { status: 'error', message: 'Invalid port number. Port must be between 1-65535' };
-      }
+      // Call the Rust backend to validate the connection
+      const response = await fetch(`${BACKEND_URL}/validate-connection`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ endpoint }),
+      });
       
-      // Simulate connection attempt
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // Simulate network checks
-      
-      // Simulate DNS resolution
-      if (host === 'localhost' || host === '127.0.0.1') {
-        // Allow localhost connections
-      } else if (host.includes('non-existent')) {
-        return { status: 'error', message: 'DNS resolution failed: Could not resolve hostname' };
-      } else if (host.includes('example') && !host.includes('real-example')) {
-        // Simulate DNS resolution failure for example domains except 'real-example'
-        return { status: 'error', message: 'DNS resolution failed: Could not resolve hostname' };
-      }
-      
-      // Simulate actual server endpoint check
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Simulate various errors
-      if (endpoint.includes('error')) {
-        return { status: 'error', message: 'Connection error: The server rejected the connection' };
-      }
-      
-      if (endpoint.includes('timeout')) {
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        return { status: 'error', message: 'Connection timeout: The server did not respond in time' };
-      }
-      
-      if (endpoint.includes('invalid-cert')) {
-        return { status: 'error', message: 'Security error: Server certificate validation failed' };
-      }
-      
-      if (endpoint.includes('no-server')) {
-        return { status: 'error', message: 'Server not found: No OPC UA server is running at the specified endpoint' };
-      }
-      
-      if (endpoint.includes('refused')) {
-        return { status: 'error', message: 'Connection refused: The server actively refused the connection' };
-      }
-      
-      // For testing, only allow specific endpoints to "connect" successfully
-      const allowedHosts = ['localhost', '127.0.0.1', 'real-example.com', 'opcua-server.com', 'demo.opcua.org'];
-      const isAllowed = allowedHosts.some(allowed => host.includes(allowed));
-      
-      if (!isAllowed) {
-        // Simulate a more realistic connection failure
+      if (!response.ok) {
+        const errorData = await response.json();
         return { 
           status: 'error', 
-          message: 'Failed to establish connection with the OPC UA server. Verify the server is running and accessible.' 
+          message: errorData.message || `Connection error: ${response.statusText}` 
         };
       }
       
-      // Simulate successful handshake
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const data = await response.json();
+      return data.connected 
+        ? { status: 'connected' } 
+        : { status: 'error', message: data.message || 'Failed to connect to the server' };
       
-      return { status: 'connected' };
     } catch (error) {
       console.error('Error connecting to OPC UA server:', error);
-      // More detailed error message
+      
       let errorMessage = 'Unknown error occurred';
       
       if (error instanceof Error) {
-        if (error.message.includes('NetworkError')) {
-          errorMessage = 'Network error: Unable to reach the server';
-        } else if (error.message.includes('timeout')) {
-          errorMessage = 'Connection timeout: The server did not respond in time';
-        } else if (error.message.includes('certificate')) {
-          errorMessage = 'Security error: Certificate validation failed';
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error: Unable to reach the backend server';
         } else {
           errorMessage = error.message;
         }
@@ -126,136 +92,41 @@ export const opcUaService = {
   },
   
   /**
-   * Browse the OPC UA server address space
+   * Browse the OPC UA server address space via Rust backend
    * @param endpoint The server endpoint URL
    * @param nodeId The node ID to browse from (optional)
    * @returns Promise resolving to an array of OPC UA nodes
    */
   browseServer: async (endpoint: string, nodeId?: string): Promise<OpcUaNode[]> => {
     try {
-      // Validate connection first
-      const connectionCheck = await opcUaService.testConnection(endpoint);
-      if (connectionCheck.status !== 'connected') {
-        throw new Error(connectionCheck.message || 'Failed to connect to the server');
+      // Validate connection first (optional - you might want to skip this if you know you're already connected)
+      if (!nodeId) {
+        const connectionCheck = await opcUaService.testConnection(endpoint);
+        if (connectionCheck.status !== 'connected') {
+          throw new Error(connectionCheck.message || 'Failed to connect to the server');
+        }
       }
       
-      // Simulate network delay more realistically
-      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
+      // Call the Rust backend to browse the server
+      const response = await fetch(`${BACKEND_URL}/browse`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          endpoint,
+          nodeId: nodeId || 'i=84' // Root folder (i=84) if no nodeId is provided
+        }),
+      });
       
-      // In a real implementation, this would use a library to browse the OPC UA server
-      // For demo purposes, we'll return simulated data based on the OPC UA information model
-      
-      // Return different data based on nodeId to simulate browsing different parts of the address space
-      if (nodeId === "1.1") {
-        return [
-          {
-            id: '1.1.1',
-            name: 'ServerStatus',
-            nodeType: 'Object',
-            children: [
-              { id: '1.1.1.1', name: 'State', nodeType: 'Variable', dataType: 'String' },
-              { id: '1.1.1.2', name: 'StartTime', nodeType: 'Variable', dataType: 'DateTime' },
-              { id: '1.1.1.3', name: 'CurrentTime', nodeType: 'Variable', dataType: 'DateTime' },
-              { id: '1.1.1.4', name: 'BuildInfo', nodeType: 'Variable', dataType: 'Structure' },
-            ]
-          },
-          {
-            id: '1.1.2',
-            name: 'ServerCapabilities',
-            nodeType: 'Object',
-            children: [
-              { id: '1.1.2.1', name: 'MaxBrowseContinuationPoints', nodeType: 'Variable', dataType: 'UInt16' },
-              { id: '1.1.2.2', name: 'MaxQueryContinuationPoints', nodeType: 'Variable', dataType: 'UInt16' },
-              { id: '1.1.2.3', name: 'MaxHistoryContinuationPoints', nodeType: 'Variable', dataType: 'UInt16' },
-            ]
-          },
-          { id: '1.1.3', name: 'ServerDiagnostics', nodeType: 'Object' },
-          { id: '1.1.4', name: 'VendorServerInfo', nodeType: 'Object' },
-          { id: '1.1.5', name: 'ServerRedundancy', nodeType: 'Object' },
-        ];
-      } else if (nodeId === "1.2") {
-        return [
-          {
-            id: '1.2.1',
-            name: 'PLC1',
-            nodeType: 'Object',
-            children: [
-              { id: '1.2.1.1', name: 'Temperature', nodeType: 'Variable', dataType: 'Float' },
-              { id: '1.2.1.2', name: 'Pressure', nodeType: 'Variable', dataType: 'Float' },
-              { id: '1.2.1.3', name: 'Status', nodeType: 'Variable', dataType: 'Boolean' },
-            ]
-          },
-          {
-            id: '1.2.2',
-            name: 'Sensor001',
-            nodeType: 'Object',
-            children: [
-              { id: '1.2.2.1', name: 'Value', nodeType: 'Variable', dataType: 'Double' },
-              { id: '1.2.2.2', name: 'Units', nodeType: 'Variable', dataType: 'String' },
-              { id: '1.2.2.3', name: 'IsActive', nodeType: 'Variable', dataType: 'Boolean' },
-            ]
-          }
-        ];
-      } else if (nodeId === "2.1") {
-        return [
-          { id: '2.1.1', name: 'BaseObjectType', nodeType: 'ObjectType' },
-          { id: '2.1.2', name: 'FolderType', nodeType: 'ObjectType' },
-          { id: '2.1.3', name: 'DeviceType', nodeType: 'ObjectType' },
-        ];
-      } else if (nodeId === "2.2") {
-        return [
-          { id: '2.2.1', name: 'BaseVariableType', nodeType: 'VariableType' },
-          { id: '2.2.2', name: 'PropertyType', nodeType: 'VariableType' },
-          { id: '2.2.3', name: 'DataItemType', nodeType: 'VariableType' },
-        ];
-      } else {
-        // Root level browse
-        return [
-          {
-            id: '1',
-            name: 'Objects',
-            nodeType: 'Folder',
-            children: [
-              {
-                id: '1.1',
-                name: 'Server',
-                nodeType: 'Object',
-              },
-              {
-                id: '1.2',
-                name: 'DeviceSet',
-                nodeType: 'Object',
-              }
-            ]
-          },
-          {
-            id: '2',
-            name: 'Types',
-            nodeType: 'Folder',
-            children: [
-              {
-                id: '2.1',
-                name: 'ObjectTypes',
-                nodeType: 'Folder',
-              },
-              {
-                id: '2.2',
-                name: 'VariableTypes',
-                nodeType: 'Folder',
-              },
-              { id: '2.3', name: 'ReferenceTypes', nodeType: 'Folder' },
-              { id: '2.4', name: 'DataTypes', nodeType: 'Folder' },
-              { id: '2.5', name: 'EventTypes', nodeType: 'Folder' },
-            ]
-          },
-          {
-            id: '3',
-            name: 'Views',
-            nodeType: 'Folder',
-            children: []
-          }
-        ];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Browse error: ${response.statusText}`);
       }
+      
+      const data = await response.json();
+      return data.nodes;
+      
     } catch (error) {
       console.error('Error browsing OPC UA server:', error);
       toast({
@@ -264,6 +135,77 @@ export const opcUaService = {
         variant: "destructive",
       });
       return [];
+    }
+  },
+  
+  /**
+   * Read a value from an OPC UA node via Rust backend
+   * @param endpoint The server endpoint URL
+   * @param nodeId The node ID to read
+   * @returns Promise resolving to the node value
+   */
+  readNodeValue: async (endpoint: string, nodeId: string): Promise<any> => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/read-value`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ endpoint, nodeId }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Read error: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.value;
+      
+    } catch (error) {
+      console.error('Error reading OPC UA node value:', error);
+      toast({
+        title: "Error reading node value",
+        description: error instanceof Error ? error.message : "Failed to read the node value",
+        variant: "destructive",
+      });
+      return null;
+    }
+  },
+  
+  /**
+   * Write a value to an OPC UA node via Rust backend
+   * @param endpoint The server endpoint URL
+   * @param nodeId The node ID to write to
+   * @param value The value to write
+   * @returns Promise resolving to success status
+   */
+  writeNodeValue: async (endpoint: string, nodeId: string, value: any): Promise<boolean> => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/write-value`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ endpoint, nodeId, value }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Write error: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.success;
+      
+    } catch (error) {
+      console.error('Error writing OPC UA node value:', error);
+      toast({
+        title: "Error writing node value",
+        description: error instanceof Error ? error.message : "Failed to write the node value",
+        variant: "destructive",
+      });
+      return false;
     }
   }
 };
