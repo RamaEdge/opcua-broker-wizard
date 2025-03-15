@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit, Database } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import OpcUaObjectSelection from './OpcUaObjectSelection';
+import type { OpcUaNode } from './OpcUaObjectBrowser';
 
 interface StepProps {
   title: string;
@@ -52,6 +53,7 @@ const ConfigWizard = () => {
     useCertificate: false,
     certificatePath: '',
     certificatePassword: '',
+    selectedOpcUaNodes: [] as OpcUaNode[],
   });
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +67,10 @@ const ConfigWizard = () => {
 
   const handleSwitchChange = (name: string, checked: boolean) => {
     setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+  
+  const handleOpcUaNodesChange = (nodes: OpcUaNode[]) => {
+    setFormData(prev => ({ ...prev, selectedOpcUaNodes: nodes }));
   };
 
   const securityPolicies = [
@@ -302,6 +308,16 @@ const ConfigWizard = () => {
       ),
     },
     {
+      title: 'Object Selection',
+      description: 'Select the OPC UA objects you want to monitor',
+      icon: <Database className="h-5 w-5" />,
+      content: (
+        <div className="space-y-6">
+          <OpcUaObjectSelection onSelectionChange={handleOpcUaNodesChange} />
+        </div>
+      ),
+    },
+    {
       title: 'Advanced Settings',
       description: 'Configure diagnostics and performance settings',
       icon: <Clock className="h-5 w-5" />,
@@ -396,6 +412,29 @@ const ConfigWizard = () => {
                 <span className="text-muted-foreground">Anonymous Access:</span>
                 <span className="font-medium">{formData.enableAnonymous ? 'Enabled' : 'Disabled'}</span>
               </li>
+            </ul>
+          </div>
+          
+          <div className="rounded-lg border p-4 bg-muted/50">
+            <h4 className="font-medium mb-2">Object Selection</h4>
+            <ul className="space-y-2 text-sm">
+              <li className="flex justify-between">
+                <span className="text-muted-foreground">Selected Objects:</span>
+                <span className="font-medium">{formData.selectedOpcUaNodes.length}</span>
+              </li>
+              {formData.selectedOpcUaNodes.length > 0 && (
+                <li>
+                  <span className="text-muted-foreground block mb-1">Selected Nodes:</span>
+                  <div className="bg-background rounded p-2 mt-1 max-h-[100px] overflow-y-auto">
+                    {formData.selectedOpcUaNodes.map((node) => (
+                      <div key={node.id} className="text-xs py-1 flex justify-between">
+                        <span>{node.name}</span>
+                        <span className="text-muted-foreground">{node.nodeType}</span>
+                      </div>
+                    ))}
+                  </div>
+                </li>
+              )}
             </ul>
           </div>
           

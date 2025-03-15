@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Server, Network, Database, Shield } from 'lucide-react';
+import { Server, Network, Database, Shield, Cpu } from 'lucide-react';
 import ConfigWizard from '@/components/config/ConfigWizard';
 import ConfigCard from '@/components/config/ConfigCard';
+import OpcUaObjectSelection from '@/components/config/OpcUaObjectSelection';
 
 const Config = () => {
   const [activeTab, setActiveTab] = useState('wizard');
@@ -62,6 +63,7 @@ const Config = () => {
               <TabsTrigger value="wizard">Configuration Wizard</TabsTrigger>
               <TabsTrigger value="existing">Existing Configurations</TabsTrigger>
               <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
+              <TabsTrigger value="objects">OPC UA Objects</TabsTrigger>
             </TabsList>
             
             <TabsContent value="wizard" className="animate-fade-in flex justify-center py-6 border-t border-border/40 pt-6">
@@ -103,6 +105,12 @@ const Config = () => {
               </div>
             </TabsContent>
             
+            <TabsContent value="objects" className="animate-fade-in border-t border-border/40 pt-6">
+              <div className="max-w-4xl mx-auto">
+                <OpcUaObjectSelection />
+              </div>
+            </TabsContent>
+            
             <TabsContent value="advanced" className="animate-fade-in border-t border-border/40 pt-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ConfigCard
@@ -135,6 +143,17 @@ const Config = () => {
                 >
                   <div className="text-muted-foreground text-sm">
                     Configure data retention policies, storage location, and database connections for your OPC UA data.
+                  </div>
+                </ConfigCard>
+                
+                <ConfigCard
+                  title="Object Browser"
+                  description="Browse and select OPC UA objects to monitor"
+                  icon={<Cpu className="h-5 w-5" />}
+                  onConfigure={() => setActiveTab('objects')}
+                >
+                  <div className="text-muted-foreground text-sm">
+                    Explore the OPC UA address space and select objects, variables, and methods to monitor and interact with.
                   </div>
                 </ConfigCard>
               </div>
