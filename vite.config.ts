@@ -1,3 +1,4 @@
+
 // Built-in imports first
 import path from "path";
 
@@ -23,4 +24,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+  }
 }));
