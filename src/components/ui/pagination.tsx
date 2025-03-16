@@ -117,5 +117,3 @@ export {
   PaginationNext,
   PaginationPrevious,
 }
-
-export { buttonVariants }

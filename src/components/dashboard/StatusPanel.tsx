@@ -1,9 +1,9 @@
-
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Server, Activity, Clock, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting';
 
@@ -34,14 +34,22 @@ const StatusPanel = () => {
   }, []);
   
   const getStatusColor = (status: ConnectionStatus) => {
-    if (status === 'connected') return 'bg-green-500';
-    if (status === 'reconnecting') return 'bg-yellow-500';
+    if (status === 'connected') {
+      return 'bg-green-500';
+    }
+    if (status === 'reconnecting') {
+      return 'bg-yellow-500';
+    }
     return 'bg-red-500';
   };
   
   const getStatusText = (status: ConnectionStatus) => {
-    if (status === 'connected') return 'Connected';
-    if (status === 'reconnecting') return 'Reconnecting';
+    if (status === 'connected') {
+      return 'Connected';
+    }
+    if (status === 'reconnecting') {
+      return 'Reconnecting';
+    }
     return 'Disconnected';
   };
   
@@ -50,9 +58,23 @@ const StatusPanel = () => {
     const hours = Math.floor((minutes % 1440) / 60);
     const mins = minutes % 60;
     
-    if (days > 0) return `${days}d ${hours}h ${mins}m`;
-    if (hours > 0) return `${hours}h ${mins}m`;
+    if (days > 0) {
+      return `${days}d ${hours}h ${mins}m`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
     return `${mins}m`;
+  };
+
+  const getAlertMessage = (status: ConnectionStatus) => {
+    if (status === 'connected') {
+      return 'No active alerts';
+    }
+    if (status === 'reconnecting') {
+      return 'Connection unstable';
+    }
+    return 'Connection lost';
   };
 
   return (
@@ -130,11 +152,7 @@ const StatusPanel = () => {
         <CardContent>
           <div className="text-2xl font-bold">{status === 'connected' ? 0 : 1}</div>
           <p className="text-xs text-muted-foreground mt-2">
-            {status === 'connected' 
-              ? 'No active alerts' 
-              : status === 'reconnecting'
-                ? 'Connection unstable'
-                : 'Connection lost'}
+            {getAlertMessage(status)}
           </p>
         </CardContent>
       </Card>

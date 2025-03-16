@@ -1,8 +1,8 @@
-
-import { useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { ChevronRight, Server, Network, Database } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
 
 const Hero = () => {
   const circleRef = useRef<HTMLDivElement>(null);
@@ -10,7 +10,9 @@ const Hero = () => {
   // Subtle mouse follow effect for the gradient circle
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!circleRef.current) return;
+      if (!circleRef.current) {
+        return;
+      }
       
       const { clientX, clientY } = e;
       const moveX = clientX - window.innerWidth / 2;

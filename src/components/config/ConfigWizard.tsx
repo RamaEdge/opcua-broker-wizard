@@ -1,17 +1,19 @@
+import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit, Database, Check, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+
+import OpcUaObjectSelection from './OpcUaObjectSelection';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { ChevronRight, ChevronLeft, Server, Network, Shield, Clock, Key, FileDigit, Database, Check, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import OpcUaObjectSelection from './OpcUaObjectSelection';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { opcUaService, type OpcUaNode, type ConnectionStatus } from '@/services/opcUa';
 
 interface StepProps {
@@ -162,7 +164,7 @@ const ConfigWizard = () => {
                     />
                     <Button 
                       type="button" 
-                      onClick={validateConnection}
+                      onClick={() => void validateConnection()}
                       disabled={isValidating || !formData.endpoint}
                     >
                       {isValidating ? (
@@ -176,28 +178,39 @@ const ConfigWizard = () => {
                   
                   {connectionStatus && (
                     <div className="mt-2">
-                      {connectionStatus === 'connected' ? (
-                        <Alert variant="success" className="py-2">
-                          <Check className="h-4 w-4 mr-2" />
-                          <AlertDescription>
-                            Successfully connected to the server.
-                          </AlertDescription>
-                        </Alert>
-                      ) : connectionStatus === 'error' ? (
-                        <Alert variant="destructive" className="py-2">
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          <AlertDescription>
-                            {connectionMessage || "Failed to connect to the server."}
-                          </AlertDescription>
-                        </Alert>
-                      ) : connectionStatus === 'validating' ? (
-                        <Alert className="py-2 bg-muted">
-                          <Spinner className="h-4 w-4 mr-2" />
-                          <AlertDescription>
-                            Validating connection to server...
-                          </AlertDescription>
-                        </Alert>
-                      ) : null}
+                      {(() => {
+                        switch (connectionStatus) {
+                          case 'connected':
+                            return (
+                              <Alert variant="success" className="py-2">
+                                <Check className="h-4 w-4 mr-2" />
+                                <AlertDescription>
+                                  Successfully connected to the server.
+                                </AlertDescription>
+                              </Alert>
+                            );
+                          case 'error':
+                            return (
+                              <Alert variant="destructive" className="py-2">
+                                <AlertCircle className="h-4 w-4 mr-2" />
+                                <AlertDescription>
+                                  {connectionMessage || "Failed to connect to the server."}
+                                </AlertDescription>
+                              </Alert>
+                            );
+                          case 'validating':
+                            return (
+                              <Alert className="py-2 bg-muted">
+                                <Spinner className="h-4 w-4 mr-2" />
+                                <AlertDescription>
+                                  Validating connection to server...
+                                </AlertDescription>
+                              </Alert>
+                            );
+                          default:
+                            return null;
+                        }
+                      })()}
                     </div>
                   )}
                 </div>
@@ -598,6 +611,16 @@ const ConfigWizard = () => {
 
   const currentStepData = steps[currentStep];
 
+  const getStepIndicatorClass = (index: number) => {
+    if (index === currentStep) {
+      return 'bg-primary text-primary-foreground';
+    }
+    if (index < currentStep) {
+      return 'bg-primary/15 text-primary';
+    }
+    return 'bg-muted text-muted-foreground';
+  };
+
   return (
     <Card className="w-full max-w-4xl border shadow-subtle animate-scale-in">
       <CardHeader className="pb-4">
@@ -607,28 +630,13 @@ const ConfigWizard = () => {
         </CardDescription>
         
         <div className="mt-4 flex items-center">
-          {steps.map((step, index) => (
+          {steps.map((_, index) => (
             <div key={index} className="flex items-center">
-              <div 
-                className={`
-                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-                  ${index === currentStep 
-                    ? 'bg-primary text-primary-foreground' 
-                    : index < currentStep 
-                      ? 'bg-primary/15 text-primary' 
-                      : 'bg-muted text-muted-foreground'
-                  }
-                `}
-              >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${getStepIndicatorClass(index)}`}>
                 {index + 1}
               </div>
               {index < steps.length - 1 && (
-                <div 
-                  className={`
-                    w-10 h-1 
-                    ${index < currentStep ? 'bg-primary' : 'bg-muted'}
-                  `}
-                />
+                <div className={`w-10 h-1 ${index < currentStep ? 'bg-primary' : 'bg-muted'}`} />
               )}
             </div>
           ))}

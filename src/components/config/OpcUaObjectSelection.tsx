@@ -1,12 +1,13 @@
-
+import { Cpu } from 'lucide-react';
 import { useState } from 'react';
+
+import OpcUaObjectBrowser, { type OpcUaNode } from './OpcUaObjectBrowser';
+import SelectedNodesList from './nodes/SelectedNodesList';
+import SubscriptionSettings from './subscription/SubscriptionSettings';
+
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Cpu } from 'lucide-react';
-import OpcUaObjectBrowser, { type OpcUaNode } from './OpcUaObjectBrowser';
-import SubscriptionSettings from './subscription/SubscriptionSettings';
-import SelectedNodesList from './nodes/SelectedNodesList';
 
 interface OpcUaObjectSelectionProps {
   onSelectionChange?: (selectedNodes: OpcUaNode[]) => void;

@@ -12,6 +12,7 @@ import {
   SIDEBAR_WIDTH_MOBILE,
   SIDEBAR_WIDTH_ICON,
   SIDEBAR_KEYBOARD_SHORTCUT,
+  useSidebar,
 } from "./sidebar-context"
 
 import { Button } from "@/components/ui/button"
