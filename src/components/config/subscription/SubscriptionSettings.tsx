@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
+
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SubscriptionSettingsProps {
   defaultMode?: 'polling' | 'subscription';

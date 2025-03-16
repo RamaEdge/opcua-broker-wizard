@@ -1,6 +1,14 @@
-
-import { validateEndpointFormat, createErrorHandler, getApiBaseUrl } from './opcUaUtils';
 import type { ConnectionStatus } from './opcUaTypes';
+import { validateEndpointFormat, createErrorHandler, getApiBaseUrl } from './opcUaUtils';
+
+interface ErrorResponse {
+  message: string;
+}
+
+interface ConnectionResponse {
+  connected: boolean;
+  message?: string;
+}
 
 /**
  * Test connection to an OPC UA server via Rust backend
@@ -25,14 +33,14 @@ export const testConnection = async (endpoint: string): Promise<{ status: Connec
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as ErrorResponse;
       return { 
         status: 'error', 
         message: errorData.message || `Connection error: ${response.statusText}` 
       };
     }
     
-    const data = await response.json();
+    const data = await response.json() as ConnectionResponse;
     return data.connected 
       ? { status: 'connected' } 
       : { status: 'error', message: data.message || 'Failed to connect to the server' };

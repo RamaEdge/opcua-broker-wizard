@@ -1,9 +1,9 @@
+import { CheckCircle2, XCircle } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-import { ReactNode } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ConfigCardProps {
   title: string;
@@ -24,6 +24,37 @@ const ConfigCard = ({
   onConfigure,
   children
 }: ConfigCardProps) => {
+  const getBadgeProps = (status: 'active' | 'inactive' | 'pending') => {
+    switch (status) {
+      case 'active':
+        return {
+          variant: 'default' as const,
+          className: 'ml-4 bg-success/15 text-success hover:bg-success/20 border-success/30'
+        };
+      case 'inactive':
+        return {
+          variant: 'outline' as const,
+          className: 'ml-4 bg-destructive/10 text-destructive hover:bg-destructive/15 border-destructive/30'
+        };
+      default:
+        return {
+          variant: 'secondary' as const,
+          className: 'ml-4'
+        };
+    }
+  };
+
+  const getStatusIcon = (status: 'active' | 'inactive' | 'pending') => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle2 className="mr-1 h-3 w-3" />;
+      case 'inactive':
+        return <XCircle className="mr-1 h-3 w-3" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-elevation group border border-border/50">
       <CardHeader className="relative pb-2">
@@ -41,22 +72,9 @@ const ConfigCard = ({
           </div>
           
           {status && (
-            <Badge 
-              variant={status === 'active' ? 'default' : status === 'inactive' ? 'outline' : 'secondary'}
-              className={`ml-4 ${
-                status === 'active' 
-                  ? 'bg-success/15 text-success hover:bg-success/20 border-success/30' 
-                  : status === 'inactive' 
-                    ? 'bg-destructive/10 text-destructive hover:bg-destructive/15 border-destructive/30' 
-                    : ''
-              }`}
-            >
+            <Badge {...getBadgeProps(status)}>
               <span className="flex items-center">
-                {status === 'active' ? (
-                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                ) : status === 'inactive' ? (
-                  <XCircle className="mr-1 h-3 w-3" />
-                ) : null}
+                {getStatusIcon(status)}
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </span>
             </Badge>

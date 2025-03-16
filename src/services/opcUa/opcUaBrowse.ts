@@ -1,9 +1,16 @@
+import { testConnection } from './opcUaConnection';
+import type { OpcUaNode } from './opcUaTypes';
+import { createErrorHandler, getApiBaseUrl } from './opcUaUtils';
 
 import { toast } from "@/hooks/use-toast";
 
-import { createErrorHandler, getApiBaseUrl } from './opcUaUtils';
-import { testConnection } from './opcUaConnection';
-import type { OpcUaNode } from './opcUaTypes';
+interface ErrorResponse {
+  message: string;
+}
+
+interface BrowseResponse {
+  nodes: OpcUaNode[];
+}
 
 /**
  * Browse the OPC UA server address space via Rust backend
@@ -41,14 +48,15 @@ export const browseServer = async (endpoint: string, nodeId?: string): Promise<O
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as ErrorResponse;
       throw new Error(errorData.message || `Browse error: ${response.statusText}`);
     }
     
-    const data = await response.json();
+    const data = await response.json() as BrowseResponse;
     return data.nodes;
     
   } catch (error) {
-    return handleError(error);
+    handleError(error);
+    return [];
   }
 };

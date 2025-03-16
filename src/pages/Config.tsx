@@ -1,11 +1,11 @@
-
+//import { Server, Network, Database, Shield, Cpu } from 'lucide-react';
 import { useState } from 'react';
+
+//import ConfigCard from '@/components/config/ConfigCard';
+import ConfigWizard from '@/components/config/ConfigWizard';
+import OpcUaObjectSelection from '@/components/config/OpcUaObjectSelection';
 import Layout from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Server, Network, Database, Shield, Cpu } from 'lucide-react';
-import ConfigWizard from '@/components/config/ConfigWizard';
-import ConfigCard from '@/components/config/ConfigCard';
-import OpcUaObjectSelection from '@/components/config/OpcUaObjectSelection';
 
 const Config = () => {
   const [activeTab, setActiveTab] = useState('wizard');

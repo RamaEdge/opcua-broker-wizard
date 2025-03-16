@@ -1,10 +1,10 @@
-
+import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+
+import StatusPanel from '@/components/dashboard/StatusPanel';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw } from 'lucide-react';
-import StatusPanel from '@/components/dashboard/StatusPanel';
 
 const Dashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);

@@ -1,8 +1,8 @@
-
+import { ChevronDown, BookOpen, Info } from 'lucide-react';
 import { useState } from 'react';
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChevronDown, BookOpen, Info } from 'lucide-react';
 
 const OpcUaInfoPanel = () => {
   const [isExpanded, setIsExpanded] = useState(true);

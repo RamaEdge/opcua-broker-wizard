@@ -2,7 +2,6 @@
 import * as React from "react";
 import { Controller, type ControllerProps, type FieldValues, FormProvider } from "react-hook-form";
 
-import { cn } from "@/lib/utils";
 import { FormFieldContext, FormItemContext } from "./form-context";
 import {
   FormLabel,
@@ -10,6 +9,8 @@ import {
   FormDescription,
   FormMessage,
 } from "./form-primitives";
+
+import { cn } from "@/lib/utils";
 
 export const Form = FormProvider;
 

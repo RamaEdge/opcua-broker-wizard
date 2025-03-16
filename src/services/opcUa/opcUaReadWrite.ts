@@ -14,6 +14,10 @@ type WriteValueType =
   | Array<WriteValueType>
   | { [key: string]: WriteValueType };
 
+interface ErrorResponse {
+  message: string;
+}
+
 interface OpcUaReadResponse {
   value: OpcUaValueType;
   dataType?: string;
@@ -49,15 +53,15 @@ export const readNodeValue = async (
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as ErrorResponse;
       throw new Error(errorData.message || `Read error: ${response.statusText}`);
     }
     
-    const data: OpcUaReadResponse = await response.json();
+    const data = await response.json() as OpcUaReadResponse;
     return data;
   } catch (error) {
     createErrorHandler('reading OPC UA node value')(error);
-    return null;
+    throw error;
   }
 };
 
@@ -79,7 +83,7 @@ export const writeNodeValue = async (
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json() as ErrorResponse;
       throw new Error(errorData.message || `Write error: ${response.statusText}`);
     }
   } catch (error) {
