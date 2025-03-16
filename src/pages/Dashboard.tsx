@@ -1,6 +1,8 @@
+
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
+import ServerConnectionsList from '@/components/dashboard/ServerConnectionsList';
 import StatusPanel from '@/components/dashboard/StatusPanel';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -11,7 +13,8 @@ const Dashboard = () => {
   
   const handleRefresh = () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    // Force refresh by reloading the page
+    window.location.reload();
   };
   
   return (
@@ -21,7 +24,7 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Monitor and manage your OPC UA broker
+              Monitor and manage your OPC UA connections
             </p>
           </div>
           
@@ -41,24 +44,18 @@ const Dashboard = () => {
           <Tabs defaultValue="overview" className="animate-slide-up space-y-6">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="performance">Performance</TabsTrigger>
-              <TabsTrigger value="clients">Clients</TabsTrigger>
+              <TabsTrigger value="connections">Connections</TabsTrigger>
               <TabsTrigger value="logs">Logs</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="overview" className="animate-fade-in">
+            <TabsContent value="overview" className="animate-fade-in space-y-6">
               <StatusPanel />
+              <ServerConnectionsList />
             </TabsContent>
             
-            <TabsContent value="performance">
-              <div className="min-h-[300px] flex items-center justify-center text-muted-foreground">
-                Performance metrics will be displayed here
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="clients">
-              <div className="min-h-[300px] flex items-center justify-center text-muted-foreground">
-                Connected clients will be displayed here
+            <TabsContent value="connections">
+              <div className="min-h-[300px]">
+                <ServerConnectionsList />
               </div>
             </TabsContent>
             

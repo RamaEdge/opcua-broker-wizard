@@ -1,43 +1,56 @@
+
 import { Server, Activity, Clock, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { opcUaService } from '@/services/opcUa';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
-type ConnectionStatus = 'connected' | 'disconnected' | 'reconnecting';
+type ConnectionStatus = 'connected' | 'error' | 'checking';
 
 const StatusPanel = () => {
-  const [status, setStatus] = useState<ConnectionStatus>('connected');
-  const [uptime, setUptime] = useState<number>(0);
-  const [cpuUsage, setCpuUsage] = useState<number>(0);
-  const [memoryUsage, setMemoryUsage] = useState<number>(0);
-  const [activeClients, setActiveClients] = useState<number>(0);
-  const [activeSubscriptions, setActiveSubscriptions] = useState<number>(0);
+  const [status, setStatus] = useState<ConnectionStatus>('checking');
+  const [statusMessage, setStatusMessage] = useState<string | undefined>(undefined);
+  const [lastStatusChange, setLastStatusChange] = useState<Date>(new Date());
 
   useEffect(() => {
-    // Simulate random status changes
-    const interval = setInterval(() => {
-      const statuses: ConnectionStatus[] = ['connected', 'disconnected', 'reconnecting'];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      setStatus(randomStatus);
-      
-      // Update mock metrics
-      setUptime(prev => prev + 1);
-      setCpuUsage(Math.random() * 100);
-      setMemoryUsage(Math.random() * 100);
-      setActiveClients(Math.floor(Math.random() * 20));
-      setActiveSubscriptions(Math.floor(Math.random() * 100));
-    }, 5000);
+    const checkConnection = async () => {
+      try {
+        // In a real app, you'd check all configured connections
+        // For demo purposes, we're just checking a standard endpoint
+        const endpoint = 'opc.tcp://localhost:4840';
+        const result = await opcUaService.testConnection(endpoint);
+        
+        // If status changed, update lastStatusChange
+        if ((result.status === 'connected' && status !== 'connected') || 
+            (result.status !== 'connected' && status === 'connected')) {
+          setLastStatusChange(new Date());
+        }
+        
+        setStatus(result.status === 'connected' ? 'connected' : 'error');
+        setStatusMessage(result.message);
+      } catch (error) {
+        console.error('Error checking connection:', error);
+        setStatus('error');
+        setStatusMessage('Failed to check connection status');
+      }
+    };
+    
+    // Initial check
+    checkConnection();
+    
+    // Set up interval to periodically check connection
+    const interval = setInterval(checkConnection, 10000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [status]);
   
   const getStatusColor = (status: ConnectionStatus) => {
     if (status === 'connected') {
       return 'bg-green-500';
     }
-    if (status === 'reconnecting') {
+    if (status === 'checking') {
       return 'bg-yellow-500';
     }
     return 'bg-red-500';
@@ -47,38 +60,30 @@ const StatusPanel = () => {
     if (status === 'connected') {
       return 'Connected';
     }
-    if (status === 'reconnecting') {
-      return 'Reconnecting';
+    if (status === 'checking') {
+      return 'Checking';
     }
-    return 'Disconnected';
+    return 'Error';
   };
   
-  const formatUptime = (minutes: number) => {
-    const days = Math.floor(minutes / 1440);
-    const hours = Math.floor((minutes % 1440) / 60);
-    const mins = minutes % 60;
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
     
-    if (days > 0) {
-      return `${days}d ${hours}h ${mins}m`;
+    if (diffHours > 0) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
     }
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
+    if (diffMins > 0) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
     }
-    return `${mins}m`;
-  };
-
-  const getAlertMessage = (status: ConnectionStatus) => {
-    if (status === 'connected') {
-      return 'No active alerts';
-    }
-    if (status === 'reconnecting') {
-      return 'Connection unstable';
-    }
-    return 'Connection lost';
+    return `${diffSecs} second${diffSecs !== 1 ? 's' : ''} ago`;
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Server Status</CardTitle>
@@ -90,57 +95,13 @@ const StatusPanel = () => {
             <div className="text-2xl font-bold">{getStatusText(status)}</div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Last status change: 2 minutes ago
+            Last status change: {formatTimeAgo(lastStatusChange)}
           </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Uptime</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{formatUptime(uptime)}</div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Since last restart
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">System Health</CardTitle>
-          <Activity className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm">CPU</span>
-            <span className="text-sm font-medium">{cpuUsage.toFixed(1)}%</span>
-          </div>
-          <Progress value={cpuUsage} className="h-2 mb-4" />
-          
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm">Memory</span>
-            <span className="text-sm font-medium">{memoryUsage.toFixed(1)}%</span>
-          </div>
-          <Progress value={memoryUsage} className="h-2" />
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Connected Clients</CardTitle>
-          <Server className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{activeClients}</div>
-          <div className="flex items-center mt-2">
-            <Badge variant="outline" className="mr-1">Active</Badge>
-            <span className="text-xs text-muted-foreground">
-              {activeSubscriptions} active subscriptions
-            </span>
-          </div>
+          {statusMessage && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {statusMessage}
+            </p>
+          )}
         </CardContent>
       </Card>
       
@@ -152,7 +113,11 @@ const StatusPanel = () => {
         <CardContent>
           <div className="text-2xl font-bold">{status === 'connected' ? 0 : 1}</div>
           <p className="text-xs text-muted-foreground mt-2">
-            {getAlertMessage(status)}
+            {status === 'connected' 
+              ? 'No active alerts' 
+              : status === 'checking' 
+                ? 'Checking connection status' 
+                : 'Connection error'}
           </p>
         </CardContent>
       </Card>
