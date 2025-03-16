@@ -1,12 +1,12 @@
-
-import { useState, useEffect } from 'react';
 import { Server, AlertTriangle } from 'lucide-react';
-import { opcUaService } from '@/services/opcUa';
-import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
+import { opcUaService } from '@/services/opcUa';
 
 interface ConnectedServer {
   endpoint: string;
@@ -49,11 +49,11 @@ export const ServerConnectionsList = () => {
   };
 
   useEffect(() => {
-    loadConnections();
+    void loadConnections();
     
     // Refresh connections every 30 seconds
     const interval = setInterval(() => {
-      loadConnections();
+      void loadConnections();
     }, 30000);
     
     return () => clearInterval(interval);

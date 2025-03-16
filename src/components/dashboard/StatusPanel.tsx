@@ -1,11 +1,8 @@
-
-import { Server, Activity, Clock, AlertTriangle } from 'lucide-react';
+import { Server, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { opcUaService } from '@/services/opcUa';
 
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { opcUaService } from '@/services/opcUa';
 
 type ConnectionStatus = 'connected' | 'error' | 'checking';
 
@@ -38,10 +35,12 @@ const StatusPanel = () => {
     };
     
     // Initial check
-    checkConnection();
+    void checkConnection();
     
     // Set up interval to periodically check connection
-    const interval = setInterval(checkConnection, 10000);
+    const interval = setInterval(() => {
+      void checkConnection();
+    }, 10000);
     
     return () => clearInterval(interval);
   }, [status]);
@@ -113,11 +112,13 @@ const StatusPanel = () => {
         <CardContent>
           <div className="text-2xl font-bold">{status === 'connected' ? 0 : 1}</div>
           <p className="text-xs text-muted-foreground mt-2">
-            {status === 'connected' 
-              ? 'No active alerts' 
-              : status === 'checking' 
-                ? 'Checking connection status' 
-                : 'Connection error'}
+            {(() => {
+              switch (status) {
+                case 'connected': return 'No active alerts';
+                case 'checking': return 'Checking connection status';
+                default: return 'Connection error';
+              }
+            })()}
           </p>
         </CardContent>
       </Card>
